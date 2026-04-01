@@ -1,5 +1,6 @@
-const { neon } = require("@neondatabase/serverless");
-const crypto = require("node:crypto");
+import { neon } from "@neondatabase/serverless";
+import "dotenv";
+import crypto from "node:crypto";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -11,7 +12,15 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl);
 
-const seedItems = [
+type GroceryItem = {
+  name: string;
+  category: string;
+  quantity: number;
+  priority: "low" | "medium" | "high";
+  purchased: boolean;
+};
+
+const seedItems: GroceryItem[] = [
   {
     name: "Bananas",
     category: "Produce",
@@ -85,6 +94,8 @@ const seedItems = [
 ];
 
 async function seed() {
+  console.log("🌱 Seeding database...");
+
   await sql`
     CREATE TABLE IF NOT EXISTS grocery_items (
       id TEXT PRIMARY KEY,
@@ -99,7 +110,9 @@ async function seed() {
 
   for (const item of seedItems) {
     await sql`
-      INSERT INTO grocery_items (id, name, category, quantity, purchased, priority, updated_at)
+      INSERT INTO grocery_items (
+        id, name, category, quantity, purchased, priority, updated_at
+      )
       VALUES (
         ${crypto.randomUUID()},
         ${item.name},
@@ -112,10 +125,10 @@ async function seed() {
     `;
   }
 
-  console.log(`Seed complete: inserted ${seedItems.length} grocery items.`);
+  console.log(`✅ Seed complete: inserted ${seedItems.length} grocery items.`);
 }
 
 seed().catch((error) => {
-  console.error("Seed failed:", error);
+  console.error("❌ Seed failed:", error);
   process.exit(1);
 });
